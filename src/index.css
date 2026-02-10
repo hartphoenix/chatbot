@@ -123,3 +123,140 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* --- Chat layout --- */
+
+.chat-turn {
+  margin-bottom: 1.5rem;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.chat-messages li.user {
+  position: sticky;
+  top: 2.75rem;
+  z-index: 30;
+  align-self: flex-start;
+  max-width: 85%;
+  background: oklch(0.55 0.07 265);
+  color: oklch(0.18 0.04 265);
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  box-shadow: 0 0 12px 2px oklch(1 0 0 / 0.06);
+}
+
+.chat-messages li.assistant {
+  align-self: flex-end;
+  max-width: 85%;
+  overflow-x: auto;
+  background: oklch(0.17 0.035 265);
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--foreground);
+}
+
+.chat-messages li.loading {
+  align-self: flex-start;
+  color: var(--muted-foreground);
+  font-style: italic;
+  font-size: 0.85rem;
+  animation: pulse-fade 2s ease-in-out infinite;
+}
+
+@keyframes pulse-fade {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* --- Markdown typography (assistant messages) --- */
+
+.chat-messages li.assistant h1,
+.chat-messages li.assistant h2,
+.chat-messages li.assistant h3,
+.chat-messages li.assistant h4 {
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+  line-height: 1.3;
+}
+
+.chat-messages li.assistant h1 { font-size: 1.15em; }
+.chat-messages li.assistant h2 { font-size: 1.05em; }
+.chat-messages li.assistant h3 { font-size: 0.95em; color: var(--muted-foreground); }
+.chat-messages li.assistant h4 { font-size: 0.9em; color: var(--muted-foreground); }
+
+.chat-messages li.assistant p {
+  margin: 0.5em 0;
+}
+
+.chat-messages li.assistant ul,
+.chat-messages li.assistant ol {
+  padding-left: 1.25em;
+  margin: 0.4em 0;
+}
+
+.chat-messages li.assistant li {
+  margin: 0.2em 0;
+}
+
+.chat-messages li.assistant ul > li {
+  list-style-type: disc;
+}
+
+.chat-messages li.assistant ol > li {
+  list-style-type: decimal;
+}
+
+.chat-messages li.assistant code {
+  background: var(--muted);
+  padding: 0.15em 0.35em;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+
+.chat-messages li.assistant pre {
+  background: var(--muted);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+.chat-messages li.assistant pre code {
+  background: none;
+  padding: 0;
+}
+
+.chat-messages li.assistant strong {
+  font-weight: 600;
+}
+
+.chat-messages li.assistant blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 0.75em;
+  color: var(--muted-foreground);
+  margin: 0.5em 0;
+}
+
+.chat-messages li.assistant hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1em 0;
+}
+
+.chat-messages li.assistant a {
+  color: var(--ring);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

@@ -1,6 +1,8 @@
+import { useState } from "react"
 import type { JSX } from "react"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 type InputFormProps = {
   setMessages: React.Dispatch<React.SetStateAction<{
@@ -10,6 +12,7 @@ type InputFormProps = {
   formRef: React.RefObject<HTMLFormElement | null>
 }
 export const InputForm = ({ setMessages, formRef }: InputFormProps): JSX.Element => {
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const chat = (formData: FormData) => {
     const newMessage = formData.get("input")
@@ -35,19 +38,40 @@ export const InputForm = ({ setMessages, formRef }: InputFormProps): JSX.Element
   }
 
   const reset = async () => {
-    const conf = confirm("Erase chat history and start over?")
-    if (conf) {
-      await fetch('/reset', { method: 'DELETE' })
-      setMessages([])
-    } else { console.log("User canceled reset request") }
+    await fetch('/reset', { method: 'DELETE' })
+    setMessages([])
+    setConfirmOpen(false)
   }
+
   return (
-    <form ref={formRef} action={chat} className="mt-4 flex flex-col gap-2">
-      <Textarea placeholder="Hey Amadeus," name="input" className="resize-none" />
-      <div className="flex gap-2">
-        <Button type="submit" className="flex-1">say it</Button>
-        <Button type="reset" variant="outline" onClick={reset}>erase all</Button>
-      </div>
-    </form>
+    <div className="p-4 bg-[oklch(0.25_0.04_265_/_0.7)] backdrop-blur-md">
+      <form ref={formRef} action={chat} className="flex gap-2 items-center">
+        <Textarea
+          placeholder="Hey Amadeus,"
+          name="input"
+          className="resize-none min-h-[44px] max-h-32 flex-1"
+          rows={1}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              formRef.current?.requestSubmit()
+            }
+          }} />
+        <Button type="submit" size="sm">send</Button>
+        <Popover open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="ghost" size="sm"
+              className="text-muted-foreground border border-muted-foreground/30">reset</Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-3" side="top" align="end">
+            <p className="text-sm mb-2">Erase chat history?</p>
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="ghost" onClick={() => setConfirmOpen(false)}>cancel</Button>
+              <Button size="sm" variant="destructive" onClick={reset}>erase</Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </form>
+    </div>
   )
 }

@@ -21,6 +21,30 @@ app.delete('/reset', (req, res) => {
   res.sendStatus(204)
 })
 
+app.get('/preview', async (req: Request, res: Response) => {
+  const url = req.query.url as string
+  if (!url) return res.status(400).json({ error: 'url required' })
+  try {
+    const response = await fetch(url)
+    const html = await response.text()
+    const og = (name: string) =>
+      html.match(new RegExp(`<meta[^>]*property=["']og:${name}["'][^>]*content=["']([^"']*)["']`, 'i'))?.[1]
+      ?? html.match(new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:${name}["']`, 'i'))?.[1]
+    const decode = (s: string) => s
+      .replace(/&mdash;/g, '\u2014').replace(/&ndash;/g, '\u2013')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    const title = decode(og('title') ?? html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] ?? '')
+    const description = decode(og('description')
+      ?? html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? '')
+    const image = og('image') ?? ''
+    res.json({ title, description, image })
+  } catch {
+    res.status(502).json({ error: 'could not fetch preview' })
+  }
+})
+
 app.post('/chat', async (req: Request, res: Response) => {
   const newMessage = req.body.content
   if (newMessage) {
