@@ -16,12 +16,16 @@ export default function App() {
   }, [])
 
   return (
-    <div className="flex flex-col h-screen max-w-3xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Amadeus</h1>
+    <div className="h-screen relative max-w-3xl mx-auto">
+      <header className="absolute top-0 left-0 right-0 z-20 px-4 py-3 bg-[oklch(0.25_0.04_265_/_0.7)] backdrop-blur-md">
+        <h1 className="text-lg font-medium text-foreground/80">mAIstro</h1>
+      </header>
       <ChatWindow messages={messages} />
-      <InputForm
-        setMessages={setMessages}
-        formRef={formRef} />
+      <div className="absolute bottom-0 left-0 right-0 z-40">
+        <InputForm
+          setMessages={setMessages}
+          formRef={formRef} />
+      </div>
     </div>
   )
 }
