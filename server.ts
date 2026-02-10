@@ -16,6 +16,11 @@ app.get('/history', (req, res) => {
   res.json(messageHistory)
 })
 
+app.delete('/reset', (req, res) => {
+  messageHistory.length = 0
+  res.sendStatus(204)
+})
+
 app.post('/chat', async (req: Request, res: Response) => {
   const newMessage = req.body.content
   if (newMessage) {
