@@ -22,22 +22,31 @@ app.delete('/reset', (req, res) => {
 })
 
 app.get('/preview', async (req: Request, res: Response) => {
+  // SSRF vulnerability: no URL validation. Dev-only guard until hardened.
+  if (process.env.NODE_ENV !== 'development') {
+    return res.status(403).json({ error: 'preview disabled outside dev mode' })
+  }
   const url = req.query.url as string
   if (!url) return res.status(400).json({ error: 'url required' })
   try {
     const response = await fetch(url)
     const html = await response.text()
+
     const og = (name: string) =>
       html.match(new RegExp(`<meta[^>]*property=["']og:${name}["'][^>]*content=["']([^"']*)["']`, 'i'))?.[1]
       ?? html.match(new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:${name}["']`, 'i'))?.[1]
+
     const decode = (s: string) => s
       .replace(/&mdash;/g, '\u2014').replace(/&ndash;/g, '\u2013')
       .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
       .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+
     const title = decode(og('title') ?? html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] ?? '')
+
     const description = decode(og('description')
       ?? html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? '')
+
     const image = og('image') ?? ''
     res.json({ title, description, image })
   } catch {
