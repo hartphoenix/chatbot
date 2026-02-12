@@ -1,51 +1,55 @@
 import { useState } from "react"
 import type { JSX } from "react"
+import type { Chat } from './App'
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 type InputFormProps = {
-  setMessages: React.Dispatch<React.SetStateAction<{
-    role: string;
-    content: string;
-  }[]>>
+  id: string
   formRef: React.RefObject<HTMLFormElement | null>
+  setActiveChat: React.Dispatch<React.SetStateAction<Chat>>
+  reset: () => void
 }
-export const InputForm = ({ setMessages, formRef }: InputFormProps): JSX.Element => {
+
+export const InputForm = ({ id, formRef, setActiveChat, reset }: InputFormProps): JSX.Element => {
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const chat = (formData: FormData) => {
+  const submitMessage = (formData: FormData) => {
     const newMessage = formData.get("input")
     if (!newMessage) return
-    setMessages(prev => [...prev,
-    { role: 'user', content: newMessage as string },
-    { role: 'loading', content: '(cogitating...)' }
-    ])
+    setActiveChat(prev => ({
+      ...prev,
+      messages: [...prev.messages,
+      { role: 'user', content: newMessage as string },
+      { role: 'loading', content: '(cogitating...)' }
+      ]
+    }))
     formRef.current?.reset()
     const msgBody = JSON.stringify({ content: newMessage })
+    const url = id ? `/chats/${id}` : '/chats'
     const sendChat = async () => {
-      const response = await fetch('/chat', {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: msgBody
       })
-      const fullChat = await response.json()
-      setMessages(fullChat)
+      const fullChat = await response.json() as Chat
+      setActiveChat(fullChat)
     }
     sendChat()
   }
 
-  const reset = async () => {
-    await fetch('/reset', { method: 'DELETE' })
-    setMessages([])
+  const resetChat = () => {
+    reset()
     setConfirmOpen(false)
   }
 
   return (
     <div className="p-4 bg-[oklch(0.25_0.04_265_/_0.7)] backdrop-blur-md">
-      <form ref={formRef} action={chat} className="flex gap-2 items-center">
+      <form ref={formRef} action={submitMessage} className="flex gap-2 items-center">
         <Textarea
           placeholder="Hey Amadeus,"
           name="input"
@@ -67,7 +71,7 @@ export const InputForm = ({ setMessages, formRef }: InputFormProps): JSX.Element
             <p className="text-sm mb-2">Erase chat history?</p>
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={() => setConfirmOpen(false)}>cancel</Button>
-              <Button size="sm" variant="destructive" onClick={reset}>erase</Button>
+              <Button size="sm" variant="destructive" onClick={resetChat}>erase</Button>
             </div>
           </PopoverContent>
         </Popover>
