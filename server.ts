@@ -3,7 +3,7 @@ import type { Express, Request, Response } from 'express'
 import ViteExpress from 'vite-express'
 import Anthropic from '@anthropic-ai/sdk';
 import 'dotenv/config'
-import { SqlLiteStorage, type Message } from './storage'
+import { SqlLiteStorage, type Conversation, type Message } from './storage'
 
 const app: Express = express()
 app.use(express.json())
@@ -14,24 +14,39 @@ const client = new Anthropic({
 
 const db = new SqlLiteStorage(":memory:")
 
-app.get('/chats/:id', async (req, res) => {
-  const id = req.params.id
-  const messages = await db.getConversation(id)
-  if (!messages) { return res.sendStatus(404) }
-  res.json(messages)
+app.get('/chats', async (req, res) => {
+  const allChats = await db.getConversations()
+  res.json(allChats)
 })
 
-app.post('/chats/:id', async (req: Request, res: Response) => {
-  const id = req.params.id as string
-  if (!req.body.content) return res.status(400).json("Message had no content")
-  const userMessage: Message = { role: 'user', content: req.body.content }
+app.get('/chats/:id', async (req, res) => {
+  const id = req.params.id
+  const conversation = await db.getConversation(id)
+  if (!conversation) { return res.sendStatus(404) }
+  res.json(conversation)
+})
 
-  const convo = await db.addMessageToConversation(userMessage, id)
+app.post('/chats', async (req, res) => {
+  if (!req.body.content) return res.status(400).json("Message had no content")
+  const newConvo = await db.createConversation()
+  if (!newConvo) return res.status(500).json("Server error, try again")
+
+  const convo = await handleUserMessage(newConvo, req.body.content)
   if (!convo) return res.status(500).json("Server error, try again")
+
+  res.json(convo)
+})
+
+const handleUserMessage = async (convo: Conversation, content: string)
+  : Promise<Conversation | null> => {
+  const userMessage: Message = { role: 'user', content: content }
+
+  const userMessageAdded = await db.addMessageToConversation(userMessage, convo.id)
+  if (!userMessageAdded) return null
 
   const params: Anthropic.MessageCreateParams = {
     max_tokens: 1024,
-    messages: convo.messages,
+    messages: userMessageAdded.messages,
     model: 'claude-haiku-4-5-20251001',
   }
 
@@ -40,19 +55,31 @@ app.post('/chats/:id', async (req: Request, res: Response) => {
   const block = aiMessage.content[0]
 
   if (block.type === 'text') {
-    const convo = await db
-      .addMessageToConversation({ role: 'assistant', content: block.text }, id)
-    if (!convo) return res.status(500).json("Server error, try again")
-    res.json(convo.messages)
-    return
+    const aiMessageAdded = await db
+      .addMessageToConversation({ role: 'assistant', content: block.text }, convo.id)
+    if (!aiMessageAdded) return null
+    return aiMessageAdded
   }
+  return null
+}
 
-  res.status(500).json("Server error, Try again.")
+app.post('/chats/:id', async (req: Request, res: Response) => {
+  const id = req.params.id as string
+  if (!req.body.content) return res.status(400).json("Message had no content")
+
+  const convoToUpdate = await db.getConversation(id)
+  if (!convoToUpdate) return res.status(404).json("No chat found with that ID")
+
+  const convoToSend = await handleUserMessage(convoToUpdate, req.body.content)
+  if (!convoToSend) return res.status(500).json("Server error, try again")
+
+  res.json(convoToSend)
 })
 
-app.delete('/chats/:id', (req, res) => { //need to add deleteConversation method
-  messageHistory.length = 0
-  res.sendStatus(204)
+app.delete('/chats/:id', async (req, res) => {
+  const deleted = await db.deleteConversation(req.params.id)
+  if (deleted) { res.sendStatus(204) }
+  else { res.status(404).json("No chat found with that ID") }
 })
 
 app.get('/preview', async (req: Request, res: Response) => {

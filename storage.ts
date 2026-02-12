@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto"
-import Database from 'better-sqlite3'
+import { Database } from 'bun:sqlite'
 
-// import Anthropic from '@anthropic-ai/sdk';
 export type Message = { role: "assistant" | "user", content: string }
 
 export type Conversation = {
@@ -16,6 +15,7 @@ export interface Storage {
   getConversation(conversationId: string): Promise<Conversation | null>
   getConversations(): Promise<Array<Conversation>>
   addMessageToConversation(message: Message, id: string): Promise<Conversation | null>
+  deleteConversation(id: string): Promise<boolean>
 }
 
 export class InMemoryStorage implements Storage {
@@ -53,6 +53,11 @@ export class InMemoryStorage implements Storage {
     toUpdate.latest = Date.now()
     return toUpdate
   }
+
+  async deleteConversation(id: string): Promise<boolean> {
+    console.log("requested to delete ID:", id)
+    return false // stubbed for later fix! always returns false for now
+  }
 }
 
 
@@ -60,8 +65,8 @@ export class SqlLiteStorage implements Storage {
   private db
 
   constructor(path: string) {
-    this.db = new Database(path, { verbose: console.log })
-    this.db.pragma('journal_mode = WAL')
+    this.db = new Database(path)
+    this.db.exec('PRAGMA journal_mode = WAL')
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS conversations (
         id TEXT PRIMARY KEY,
@@ -155,6 +160,20 @@ export class SqlLiteStorage implements Storage {
       .prepare(`UPDATE conversations SET latest = ? WHERE id = ?;`)
       .run(Date.now(), id)
     return this.getConversation(id)
+  }
+
+  async deleteConversation(id: string): Promise<boolean> {
+    try {
+      this.db
+        .prepare(`DELETE FROM messages WHERE conversationId = ?;`)
+        .run(id)
+      const resultConvos = this.db
+        .prepare(`DELETE FROM conversations WHERE id = ?;`)
+        .run(id)
+      if (resultConvos.changes === 1) {
+        return true
+      } else return false
+    } catch { return false }
   }
 
 }
