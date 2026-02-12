@@ -16,21 +16,13 @@ type ChatDrawerProps = {
   emptyChat: Chat
 }
 
-export const ChatDrawer = ({ activeChat, setActiveChat, emptyChat }: ChatDrawerProps) => {
-  const [chats, setChats] = useState<Chat[]>([])
-
-  const fetchChats = async () => {
-    const response = await fetch('/chats')
-    const allChats: Chat[] = await response.json()
-    setChats(allChats)
-  }
-
+export const ChatDrawer = ({ chats, activeChat, setActiveChat, emptyChat }: ChatDrawerProps) => {
   const startNewChat = () => {
     setActiveChat(emptyChat)
   }
 
   return (
-    <Drawer direction="right" onOpenChange={(open) => { if (open) fetchChats() }}>
+    <Drawer direction="right">
       <DrawerTrigger asChild>
         {/* TODO: style/position this trigger however you want */}
         <Button variant="ghost" size="sm">chats</Button>
