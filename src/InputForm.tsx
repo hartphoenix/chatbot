@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import type { JSX } from "react"
 import type { Chat } from './App'
 import { Textarea } from "@/components/ui/textarea"
@@ -7,13 +7,13 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 
 type InputFormProps = {
   id: string
-  formRef: React.RefObject<HTMLFormElement | null>
   setActiveChat: React.Dispatch<React.SetStateAction<Chat>>
   reset: () => void
 }
 
-export const InputForm = ({ id, formRef, setActiveChat, reset }: InputFormProps): JSX.Element => {
+export const InputForm = ({ id, setActiveChat, reset }: InputFormProps): JSX.Element => {
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const submitMessage = (formData: FormData) => {
     const newMessage = formData.get("input")
