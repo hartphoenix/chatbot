@@ -76,7 +76,7 @@ export class SupabaseStorage implements Storage {
 
     // insert message
     const now = Date.now()
-    const { data, error } = await this.db
+    const { data: _data, error } = await this.db
       .from('messages')
       .insert({
         id: crypto.randomUUID(),
