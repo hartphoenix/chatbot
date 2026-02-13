@@ -1,8 +1,10 @@
 import { betterAuth } from "better-auth"
-import { database } from '../../storage/db'
+import { Pool } from "pg"
 
 export const auth = betterAuth({
-  database,
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL
+  }),
   emailAndPassword: {
     enabled: true,
   },

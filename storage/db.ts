@@ -1,4 +1,7 @@
-import { Database } from 'bun:sqlite'
+import type { Database } from './database.types'
+import { createClient } from '@supabase/supabase-js'
 
-export const database = new Database('./chatbot.db')
-database.exec('PRAGMA journal_mode = WAL')
+export const supabase = createClient<Database>(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+)
