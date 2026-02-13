@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { ChatWindow } from './ChatWindow'
 import { InputForm } from './InputForm'
 import { ChatDrawer } from './ChatDrawer'
-import type { Conversation } from '../storage'
+import type { Conversation } from '../storage/storage'
 import { useSession } from "./lib/auth-client"
 
 export type DisplayMessage = { role: 'user' | 'assistant' | 'loading', content: string }

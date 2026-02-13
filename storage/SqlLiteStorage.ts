@@ -1,65 +1,5 @@
-import { randomUUID } from "node:crypto"
 import type { Database } from 'bun:sqlite'
-
-export type Message = { role: "assistant" | "user", content: string }
-
-export type Conversation = {
-  messages: Array<Message>
-  id: string
-  created: number
-  latest: number
-}
-
-export interface Storage {
-  createConversation(): Promise<Conversation | null>
-  getConversation(conversationId: string): Promise<Conversation | null>
-  getConversations(): Promise<Array<Conversation>>
-  addMessageToConversation(message: Message, id: string): Promise<Conversation | null>
-  deleteConversation(id: string): Promise<boolean>
-}
-
-export class InMemoryStorage implements Storage {
-  private convos: Map<string, Conversation>
-
-  constructor() {
-    this.convos = new Map()
-  }
-
-  async createConversation(): Promise<Conversation> {
-    const newConversation: Conversation = {
-      messages: [],
-      id: randomUUID(),
-      created: Date.now(),
-      latest: Date.now()
-    }
-    this.convos.set(newConversation.id, newConversation)
-    return newConversation
-  }
-
-  async getConversation(conversationId: string): Promise<Conversation | null> {
-    const foundConvo = this.convos.get(conversationId)
-    if (!foundConvo) return null
-    return foundConvo
-  }
-
-  async getConversations(): Promise<Array<Conversation>> {
-    return [...this.convos.values()]
-  }
-
-  async addMessageToConversation(message: Message, id: string): Promise<Conversation | null> {
-    const toUpdate = this.convos.get(id)
-    if (!toUpdate) { return null }
-    toUpdate.messages.push(message)
-    toUpdate.latest = Date.now()
-    return toUpdate
-  }
-
-  async deleteConversation(id: string): Promise<boolean> {
-    console.log("requested to delete ID:", id)
-    return false // stubbed for later fix! always returns false for now
-  }
-}
-
+import type { Storage, Message, Conversation } from './storage'
 
 export class SqlLiteStorage implements Storage {
   private db
@@ -88,7 +28,7 @@ export class SqlLiteStorage implements Storage {
   async createConversation(userId: string): Promise<Conversation | null> {
     const newConversation: Conversation = {
       messages: [],
-      id: randomUUID(),
+      id: crypto.randomUUID(),
       created: Date.now(),
       latest: Date.now()
     }
@@ -153,7 +93,7 @@ export class SqlLiteStorage implements Storage {
         (id, conversationId, role, content, created)
           VALUES (?, ?, ?, ?, ?)`)
         .run(
-          randomUUID(),
+          crypto.randomUUID(),
           id,
           message.role,
           message.content,
