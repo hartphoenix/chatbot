@@ -4,10 +4,13 @@ import ViteExpress from 'vite-express'
 import Anthropic from '@anthropic-ai/sdk';
 import { toNodeHandler } from 'better-auth/node'
 import 'dotenv/config'
-import { SqlLiteStorage, type Conversation, type Message } from './storage'
-import { database } from './db'
+import type { Conversation, Message } from './storage/storage'
+import { SupabaseStorage } from './storage/SupabaseStorage'
 import { auth } from './src/lib/auth'
-import { requireAuth } from './middleware/requireAuth';
+import { requireAuth } from './middleware/requireAuth'
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from './storage/database.types'
+
 
 const app: Express = express()
 
@@ -20,7 +23,12 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY, // This is the default and can be omitted
 })
 
-const db = new SqlLiteStorage(database)
+const supabase = createClient<Database>(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+)
+
+const db = new SupabaseStorage(supabase)
 
 app.get('/chats', async (req, res) => {
   const allChats = await db.getConversations(req.userId)

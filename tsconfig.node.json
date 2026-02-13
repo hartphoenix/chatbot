@@ -4,7 +4,7 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     "module": "ESNext",
-    "types": ["node"],
+    "types": ["node", "bun"],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -18,5 +18,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts", "server.ts", "express.d.ts", "middleware/**/*.ts"]
+  "include": ["vite.config.ts", "server.ts", "express.d.ts", "middleware/**/*.ts", "storage/**/*.ts", "db.ts"]
 }
