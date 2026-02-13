@@ -8,7 +8,7 @@ export const LoginForm = (): JSX.Element => {
   const [returningUser, setReturningUser] = useState(true)
   const formRef = useRef<HTMLFormElement>(null)
   const [errorMessage, setErrorMessage] = useState("")
-
+  // TODO: get error messages working in a popup or something
   const toggleMode = () => {
     setReturningUser(prev => !prev)
   }
