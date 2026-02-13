@@ -1,4 +1,3 @@
-import { error } from 'better-auth/api'
 import { Button } from './components/ui/button'
 import { Input } from './components/ui/input'
 import { signIn, signUp } from './lib/auth-client'
@@ -16,7 +15,7 @@ export const LoginForm = (): JSX.Element => {
   const handleSignIn = async (formData: FormData) => {
     const email = formData.get("email") as string
     const password = formData.get("password") as string
-    const { data, error } = await signIn.email({ email, password })
+    const { data: _data, error } = await signIn.email({ email, password })
     if (error) setErrorMessage(error.message!)
   }
 
@@ -24,7 +23,7 @@ export const LoginForm = (): JSX.Element => {
     const email = formData.get("email") as string
     const name = formData.get("name") as string
     const password = formData.get("password") as string
-    const { data, error } = await signUp.email({ email, password, name })
+    const { data: _data, error } = await signUp.email({ email, password, name })
     if (error) setErrorMessage(error.message!)
   }
 
