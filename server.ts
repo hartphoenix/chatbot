@@ -8,8 +8,7 @@ import type { Conversation, Message } from './storage/storage'
 import { SupabaseStorage } from './storage/SupabaseStorage'
 import { auth } from './src/lib/auth'
 import { requireAuth } from './middleware/requireAuth'
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from './storage/database.types'
+import { supabase } from './storage/db'
 
 
 const app: Express = express()
@@ -22,11 +21,6 @@ app.use(express.json())
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY, // This is the default and can be omitted
 })
-
-const supabase = createClient<Database>(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
-)
 
 const db = new SupabaseStorage(supabase)
 

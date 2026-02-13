@@ -11,7 +11,7 @@ export type Conversation = {
 export interface Storage {
   createConversation(userId: string): Promise<Conversation | null>
   getConversation(conversationId: string, userId: string): Promise<Conversation | null>
-  getConversations(userId: string): Promise<Array<Conversation>>
+  getConversations(userId: string): Promise<Array<Conversation> | null>
   addMessageToConversation(message: Message, id: string, userId: string): Promise<Conversation | null>
   deleteConversation(id: string, userId: string): Promise<boolean>
 }
