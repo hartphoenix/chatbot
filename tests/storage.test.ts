@@ -1,11 +1,12 @@
 import { describe, it, expect } from "vitest"
+import { Database } from 'bun:sqlite'
 import type { Message, Storage } from '../storage.ts'
 import { InMemoryStorage, SqlLiteStorage } from '../storage.ts'
 import { randomUUID } from "node:crypto"
 
 const implementations: { name: string, create: () => Storage }[] = [
   { name: 'InMemoryStorage', create: () => new InMemoryStorage() },
-  { name: 'SqliteStorage', create: () => new SqlLiteStorage(':memory:') },
+  { name: 'SqliteStorage', create: () => new SqlLiteStorage(new Database(':memory:')) },
 ]
 
 for (const { name, create } of implementations) {

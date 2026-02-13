@@ -141,21 +141,22 @@
 
 .chat-messages li.user {
   position: sticky;
-  top: 2.75rem;
+  top: 4.15rem;
   z-index: 30;
-  align-self: flex-start;
+  align-self: flex-end;
   max-width: 85%;
   background: oklch(0.55 0.07 265);
-  color: oklch(0.18 0.04 265);
+  color: oklch(0.13 0.04 265);
   padding: 0.6rem 0.85rem;
   border-radius: 0.5rem;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 500;
   line-height: 1.5;
   box-shadow: 0 0 12px 2px oklch(1 0 0 / 0.06);
 }
 
 .chat-messages li.assistant {
-  align-self: flex-end;
+  align-self: flex-start;
   max-width: 85%;
   overflow-x: auto;
   background: oklch(0.17 0.035 265);
@@ -163,7 +164,7 @@
   border-radius: 0.5rem;
   font-size: 0.9rem;
   line-height: 1.65;
-  color: var(--foreground);
+  color: oklch(0.65 0.03 260);
 }
 
 .chat-messages li.loading {
