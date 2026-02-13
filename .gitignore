@@ -4,3 +4,5 @@ dist
 scratchpad.txt
 requests/
 chatbot.db
+chatbot.db-shm
+chatbot.db-wal

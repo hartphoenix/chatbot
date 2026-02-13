@@ -13,7 +13,7 @@ export const ChatWindow = ({ messages }: {
 
   useEffect(() => {
     if (messages.length > 0) {
-      setDisplayMessages(messages)
+      setDisplayMessages(messages) // TODO: claude fuckup from styling, fix later
       setVisible(true)
     } else if (displayMessages.length > 0) {
       setVisible(false)
