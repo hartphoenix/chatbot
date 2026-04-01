@@ -5,4 +5,5 @@ scratchpad.txt
 requests/
 chatbot.db
 chatbot.db-shm
-chatbot.db-wal
+chatbot.db-wal.app-session-id
+.app-sessions.json
