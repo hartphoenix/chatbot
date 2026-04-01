@@ -1,7 +1,4 @@
-import type { Chat } from './App'
-import type { JSX } from 'react'
-import { LoginForm } from './LoginForm'
-import { signOut, useSession } from './lib/auth-client'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Drawer,
@@ -13,83 +10,94 @@ import {
   DrawerClose,
 } from '@/components/ui/drawer'
 
-type ChatDrawerProps = {
-  activeChat: Chat
-  setActiveChat: (chat: Chat) => void
-  emptyChat: Chat
-  chats: Chat[]
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>
+type SessionEntry = {
+  sessionId: string
+  title: string
+  cwd: string
+  branch: string
+  status: 'idle' | 'streaming' | 'needs_input'
+  createdAt: number
 }
 
-export const ChatDrawer = ({ activeChat, setActiveChat, emptyChat, chats, setChats }: ChatDrawerProps) => {
-  const session = useSession()
+type ChatDrawerProps = {
+  activeSessionId: string | null
+  onSwitchSession: (sessionId: string) => void
+  onNewSession: () => void
+}
 
-  const fetchChats = async () => {
-    if (!session.data) return
-    const response = await fetch('/chats')
-    const allChats: Chat[] = await response.json()
-    console.log(allChats)
-    setChats(allChats)
-  }
+export const ChatDrawer = ({ activeSessionId, onSwitchSession, onNewSession }: ChatDrawerProps) => {
+  const [sessions, setSessions] = useState<SessionEntry[]>([])
+  const [drawerWidth, setDrawerWidth] = useState(300)
+  const dragging = useRef(false)
 
-  const startNewChat = () => {
-    setActiveChat(emptyChat)
-  }
+  const fetchSessions = useCallback(async () => {
+    const res = await fetch('/api/sessions')
+    const data = await res.json()
+    setSessions(data.sessions)
+  }, [])
 
-  const handleLogout = async () => {
-    await signOut()
-    setChats([])
-    setActiveChat(emptyChat)
-  }
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragging.current = true
+    const startX = e.clientX
+    const startW = drawerWidth
+    const onMove = (e: MouseEvent) => {
+      if (!dragging.current) return
+      setDrawerWidth(Math.max(220, Math.min(500, startW + (e.clientX - startX))))
+    }
+    const onUp = () => {
+      dragging.current = false
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [drawerWidth])
 
-  const getDrawerContent = (): JSX.Element => {
-    if (session.data) return (
-      <div className="animate-in fade-in duration-300">
+  const statusDot = (s: string) => (
+    <span className={`session-dot ${s === 'streaming' ? 'streaming' : s === 'needs_input' ? 'needs-input' : 'idle'}`} />
+  )
+  const statusText = (s: string) => s === 'streaming' ? 'Running' : s === 'needs_input' ? 'Needs input' : 'Idle'
+  const dirName = (cwd: string) => cwd.split('/').pop() || cwd
+
+  return (
+    <Drawer direction="left" handleOnly={true} onOpenChange={(open) => { if (open) fetchSessions() }}>
+      <DrawerTrigger asChild>
+        <Button variant="outline" size="sm">sessions</Button>
+      </DrawerTrigger>
+      <DrawerContent style={{ width: drawerWidth, maxWidth: drawerWidth }}>
         <DrawerHeader>
-          <DrawerTitle className="text-foreground/70 text-2xl" style={{ fontFamily: "'Itim', cursive" }}>chats</DrawerTitle>
-          <DrawerDescription className="sr-only">Your saved conversations</DrawerDescription>
+          <DrawerTitle className="text-foreground/70 text-xl" style={{ fontFamily: "'Itim', cursive" }}>
+            workspaces
+          </DrawerTitle>
+          <DrawerDescription className="sr-only">Agent sessions</DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-1 p-4 overflow-y-auto text-foreground/70">
-          <div className="flex gap-2">
-            <DrawerClose asChild>
-              <Button variant="default" className="flex-1 bg-primary/70 hover:bg-primary/80 hover:shadow-[0_0_12px_rgba(255,255,255,0.15)]" onClick={startNewChat}>new chat</Button>
-            </DrawerClose>
-            <Button variant="outline" className="flex-1" onClick={handleLogout}>logout</Button>
-          </div>
-          {chats.map(chat => (
-            <DrawerClose key={chat.id} asChild>
-              <Button
-                variant={chat.id === activeChat.id ? "secondary" : "ghost"}
-                className="justify-start text-left"
-                onClick={() => setActiveChat(chat)}
+
+        <div className="drawer-list">
+          <DrawerClose asChild>
+            <Button variant="default" className="w-full bg-primary/70 hover:bg-primary/80 mb-1" onClick={onNewSession}>
+              + new session
+            </Button>
+          </DrawerClose>
+
+          {sessions.map(s => (
+            <DrawerClose key={s.sessionId || s.createdAt} asChild>
+              <button
+                className={`s-chip ${s.sessionId === activeSessionId ? 'active' : ''}`}
+                onClick={() => s.sessionId && onSwitchSession(s.sessionId)}
               >
-                {/* TODO: replace with a better preview — first message snippet, timestamp, etc. */}
-                {chat.messages[0]?.content.slice(0, 40) || 'Empty chat'}
-              </Button>
+                <div className="s-chip-title">{s.title || '(untitled)'}</div>
+                <div className="s-chip-row">{statusDot(s.status)} <span className={`s-chip-status ${s.status}`}>{statusText(s.status)}</span></div>
+                <div className="s-chip-row"><span className="s-chip-icon">⑂</span> {s.branch}</div>
+                <div className="s-chip-row"><span className="s-chip-icon">📁</span> {dirName(s.cwd)}</div>
+              </button>
             </DrawerClose>
           ))}
         </div>
-      </div>
-    )
-    return (
-      <div className="animate-in fade-in duration-300">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>Account</DrawerTitle>
-          <DrawerDescription>Sign in or create an account</DrawerDescription>
-        </DrawerHeader>
-        <LoginForm />
-      </div>
-    )
-  }
 
-  return (
-    <Drawer direction="right" onOpenChange={(open) => { if (open) fetchChats() }}>
-      <DrawerTrigger asChild>
-        {/* TODO: style/position this trigger however you want */}
-        <Button variant="outline">{session.data ? "chats" : "login"}</Button>
-      </DrawerTrigger>
-      <DrawerContent>
-        {getDrawerContent()}
+        {/* Resize handle on right edge */}
+        <div className="drawer-resize" onMouseDown={onMouseDown} />
       </DrawerContent>
     </Drawer>
   )

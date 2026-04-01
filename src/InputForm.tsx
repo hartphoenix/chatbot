@@ -1,80 +1,41 @@
-import { useState, useRef } from "react"
+import { useRef } from "react"
 import type { JSX } from "react"
-import type { Chat } from './App'
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 type InputFormProps = {
-  id: string
-  setActiveChat: React.Dispatch<React.SetStateAction<Chat>>
-  reset: () => void
+  sendMessage: (content: string) => void
+  isStreaming: boolean
 }
 
-export const InputForm = ({ id, setActiveChat, reset }: InputFormProps): JSX.Element => {
-  const [confirmOpen, setConfirmOpen] = useState(false)
+export const InputForm = ({ sendMessage, isStreaming }: InputFormProps): JSX.Element => {
   const formRef = useRef<HTMLFormElement>(null)
 
-  const submitMessage = (formData: FormData) => {
-    const newMessage = formData.get("input")
-    if (!newMessage) return
-    setActiveChat(prev => ({
-      ...prev,
-      messages: [...prev.messages,
-      { role: 'user', content: newMessage as string },
-      { role: 'loading', content: '(cogitating...)' }
-      ]
-    }))
+  const handleSubmit = (formData: FormData) => {
+    const content = formData.get("input") as string
+    if (!content?.trim()) return
+    sendMessage(content)
     formRef.current?.reset()
-    const msgBody = JSON.stringify({ content: newMessage })
-    const url = id ? `/chats/${id}` : '/chats'
-    const sendChat = async () => {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: msgBody
-      })
-      const fullChat = await response.json() as Chat
-      setActiveChat(fullChat)
-    }
-    sendChat()
-  }
-
-  const resetChat = () => {
-    reset()
-    setConfirmOpen(false)
   }
 
   return (
     <div className="p-4 bg-[oklch(0.25_0.04_265_/_0.7)] backdrop-blur-md">
-      <form ref={formRef} action={submitMessage} className="flex gap-2 items-center">
+      <form ref={formRef} action={handleSubmit} className="flex gap-2 items-center">
         <Textarea
-          placeholder="Hey Amadeus,"
+          placeholder="Ask the agent something..."
           name="input"
           className="resize-none min-h-[44px] max-h-32 flex-1"
           rows={1}
+          disabled={isStreaming}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
               formRef.current?.requestSubmit()
             }
           }} />
-        <Button type="submit" size="sm">send</Button>
-        <Popover open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <PopoverTrigger asChild>
-            <Button type="button" variant="ghost" size="sm"
-              className="text-muted-foreground border border-muted-foreground/30">reset</Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-3" side="top" align="end">
-            <p className="text-sm mb-2">Erase chat history?</p>
-            <div className="flex gap-2 justify-end">
-              <Button size="sm" variant="ghost" onClick={() => setConfirmOpen(false)}>cancel</Button>
-              <Button size="sm" variant="destructive" onClick={resetChat}>erase</Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Button type="submit" size="sm" disabled={isStreaming}>
+          {isStreaming ? '...' : 'send'}
+        </Button>
       </form>
     </div>
   )
